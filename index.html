@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DolphinNote - Berbagi Catatan di Bawah Laut</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            /* Background gradasi biru laut dengan efek siluet lumba-lumba menggunakan SVG */
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 50%, #6dd5ed 100%);
+            background-attachment: fixed;
+            color: #333;
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* Navigasi Menu Halaman */
+        nav {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        nav a:hover, nav a.active {
+            background-color: #00d2ff;
+            color: #1e3c72;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        /* Pembungkus Halaman (Default disembunyikan kecuali yang aktif) */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Konten Umum */
+        .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            border: 2px solid #00d2ff;
+        }
+
+        /* Form Buat Catatan */
+        .note-form input, .note-form textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .note-form input:focus, .note-form textarea:focus {
+            border-color: #00d2ff;
+        }
+
+        .note-form textarea {
+            resize: vertical;
+            height: 120px;
+        }
+
+        .note-form button {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3);
+        }
+
+        .note-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 114, 255, 0.5);
+        }
+
+        /* Daftar Catatan */
+        .notes-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .note-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-top: 6px solid #0072ff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Dekorasi sirip lumba-lumba transparan di pojok kartu */
+        .note-card::after {
+            content: "🐬";
+            position: absolute;
+            bottom: -10px;
+            right: -5px;
+            font-size: 4rem;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+
+        .note-card h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+
+        .note-card p {
+            color: #555;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            z-index: 1;
+        }
+
+        .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        .btn-share { color: #0072ff; }
+        .btn-delete { color: #e74c3c; }
+        .btn-share:hover, .btn-delete:hover { text-decoration: underline; }
+
+        /* Style untuk Halaman Kontak & Tentang */
+        .content-card h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+        .content-card p {
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a onclick="switchPage('home')" id="nav-home" class="active">🐬 Beranda</a>
+        <a onclick="switchPage('about')" id="nav-about">🌊 Tentang Kami</a>
+        <a onclick="switchPage('contact')" id="nav-contact">✉️ Kontak</a>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>🐬 DolphinNote</h1>
+            <p>Tulis, simpan, dan bagikan catatanmu dengan ketenangan samudera luas.</p>
+        </header>
+
+        <div id="page-home" class="page active">
+            <div class="content-card note-form">
+                <h2 style="color: #1e3c72; margin-bottom: 15px;">Buat Catatan Baru</h2>
+                <input type="text" id="noteTitle" placeholder="Judul Catatan..." required>
+                <textarea id="noteContent" placeholder="Tulis inspirasimu di sini..." required></textarea>
+                <button onclick="addNote()">Bagikan ke Samudera Catatan</button>
+            </div>
+
+            <h2 style="color: white; margin-bottom: 15px; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">Semua Catatan</h2>
+            <div class="notes-list" id="notesContainer">
+                </div>
+        </div>
+
+        <div id="page-about" class="page">
+            <div class="content-card">
+                <h2>Tentang DolphinNote</h2>
+                <p><strong>DolphinNote</strong> adalah platform berbagi catatan bertema lumba-lumba yang dirancang untuk memberikan ketenangan saat kamu bekerja atau menulis teks.</p>
+                <p>Seperti lumba-lumba yang cerdas dan suka bersosialisasi, platform ini dibuat agar kamu bisa dengan mudah mengorganisir pikiranmu lalu membagikannya kepada teman kelompok, keluarga, atau rekan kerja hanya dalam satu klik.</p>
+                <p>Semua catatan di sini disimpan secara lokal di peramban (browser) milikmu, menjamin privasimu tetap aman layaknya rahasia laut dalam.</p>
+            </div>
+        </div>
+
+        <div id="page-contact" class="page">
+            <div class="content-card">
+                <h2>Hubungi Penjaga Pantai</h2>
+                <p>Punya pertanyaan, kendala teknis, atau sekadar ingin menyapa lumba-lumba kami? Silakan hubungi kami melalui formulir simulasi di bawah ini:</p>
+                
+                <div class="note-form" style="padding: 0; box-shadow: none; border: none;">
+                    <input type="text" placeholder="Nama Lengkap">
+                    <input type="email" placeholder="Alamat Email">
+                    <textarea placeholder="Pesan Anda..."></textarea>
+                    <button onclick="alert('Pesan berhasil dikirim! Terima kasih telah menghubungi kami.')">Kirim Pesan</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. LOGIKA NAVIGASI HALAMAN (MULTI-PAGE) ---
+        function switchPage(pageName) {
+            // Sembunyikan semua halaman
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            // Hilangkan status aktif di semua menu navigasi
+            document.querySelectorAll('nav a').forEach(nav => {
+                nav.classList.remove('active');
+            });
+
+            // Tampilkan halaman yang dipilih & aktifkan menunya
+            document.getElementById(`page-${pageName}`).classList.add('active');
+            document.getElementById(`nav-${pageName}`).classList.add('active');
+        }
+
+
+        // --- 2. LOGIKA PLATFORM CATATAN ---
+        document.addEventListener("DOMContentLoaded", () => {
+            displayNotes();
+        });
+
+        function addNote() {
+            const titleInput = document.getElementById("noteTitle");
+            const contentInput = document.getElementById("noteContent");
+
+            if (titleInput.value.trim() === "" || contentInput.value.trim() === "") {
+                alert("Ups! Judul dan isi catatan tidak boleh kosong.");
+                return;
+            }
+
+            const newNote = {
+                id: Date.now(),
+                title: titleInput.value,
+                content: contentInput.value,
+                date: new Date().toLocaleDateString('id-ID')
+            };
+
+            const notes = JSON.parse(localStorage.getItem("dolphinNotes")) || [];
+            notes.unshift(newNote);
+            localStorage.setItem("dolphinNotes", JSON.stringify(notes));
+
+            titleInput.value = "";
+            contentInput.value = "";
+
+            displayNotes();
+        }
+
+        function displayNotes() {
+            const container = document.getElementById("notesContainer");
+            const notes = JSON.parse(localStorage.getItem("dolphinNotes")) || [];
+
+            container.innerHTML = "";
+
+            if (notes.length === 0) {
+                container.innerHTML = "<p style='color: white; grid-column: 1/-1; text-align: center; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);'>Belum ada catatan di samudera ini. Yuk, buat satu!</p>";
+                return;
+            }
+
+            notes.forEach(note => {
+                const card = document.createElement("div");
+                card.className = "note-card";
+                card.innerHTML = `
+                    <div>
+                        <h3>${escapeHTML(note.title)}</h3>
+                        <p>${escapeHTML(note.content)}</p>
+                    </div>
+                    <div class="note-footer">
+                        <span>📅 ${note.date}</span>
+                        <div class="actions">
+                            <button class="btn-share" onclick="shareNote('${escapeHTML(note.title)}', '${escapeHTML(note.content)}')">Salin</button>
+                            <button class="btn-delete" onclick="deleteNote(${note.id})">Hapus</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function deleteNote(id) {
+            let notes = JSON.parse(localStorage.getItem("dolphinNotes")) || [];
+            notes = notes.filter(note => note.id !== id);
+            localStorage.setItem("dolphinNotes", JSON.stringify(notes));
+            displayNotes();
+        }
+
+        function shareNote(title, content) {
+            const textToCopy = `=== ${title} ===\n\n${content}`;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert("Catatan berhasil disalin! Sekarang kamu bisa membagikannya.");
+            }).catch(err => {
+                alert("Gagal menyalin.");
+            });
+        }
+
+        function escapeHTML(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+  </html>
